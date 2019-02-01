@@ -19,6 +19,7 @@
    specific language governing permissions and limitations under the License.
 */
 package com.example.dynamodb;
+import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
@@ -56,11 +57,11 @@ public class CreateTable
         }
 
         /* Read the name from command args */
-        String table_name = args[0];
+        String tableName = args[0];
 
         System.out.format(
             "Creating table \"%s\" with a simple primary key: \"Name\".\n",
-            table_name);
+            tableName);
 
         CreateTableRequest request = CreateTableRequest.builder()
         		.attributeDefinitions(AttributeDefinition.builder()
@@ -72,13 +73,13 @@ public class CreateTable
         				.keyType(KeyType.HASH)
         				.build())
         		.provisionedThroughput(ProvisionedThroughput.builder()
-        				.readCapacityUnits(new Long(10))
-        				.writeCapacityUnits(new Long(10))
+        				.readCapacityUnits(10L)
+        				.writeCapacityUnits(10L)
         				.build())
-        		.tableName(table_name)
+        		.tableName(tableName)
         		.build();
 
-        DynamoDbClient ddb = DynamoDbClient.create();
+        DynamoDbClient ddb = DynamoHelper.getClient();
 
         try {
             CreateTableResponse response = ddb.createTable(request);
@@ -86,6 +87,14 @@ public class CreateTable
         } catch (DynamoDbException e) {
             System.err.println(e.getMessage());
             System.exit(1);
+        } finally {
+            DeleteTableRequest delete = DeleteTableRequest.builder().tableName(tableName).build();
+            try {
+                ddb.deleteTable(delete);
+            } catch (DynamoDbException e ){
+                System.err.println(e.getMessage());
+                System.exit(1);
+            }
         }
         System.out.println("Done!");
     }
